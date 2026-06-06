@@ -57,9 +57,9 @@ if uploaded_file:
             """
             
             try:
-                # Llamada al modelo con el prefijo 'models/' que requiere el SDK nuevo
+                # LLAMADA CORREGIDA: Usamos simplemente 'gemini-1.5-flash'
                 response = client.models.generate_content(
-                    model='models/gemini-1.5-flash', 
+                    model='gemini-1.5-flash', 
                     contents=[image, prompt]
                 )
                 st.session_state['reporte_completo'] = response.text
