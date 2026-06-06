@@ -17,6 +17,7 @@ if not API_KEY:
     st.error("Error: API Key no configurada.")
     st.stop()
 
+# Cambiamos la forma de inicializar el cliente para forzar la versión estable
 try:
     client = genai.Client(api_key=API_KEY)
 except Exception as e:
@@ -28,10 +29,10 @@ uploaded_file = st.file_uploader("Subí tu planilla:", type=["jpg", "jpeg", "png
 if uploaded_file:
     image = Image.open(uploaded_file)
     if st.button("🚀 Generar Reportes"):
-        with st.spinner("Conectando y analizando..."):
+        with st.spinner("Analizando..."):
             prompt = """
-            Actúa como un analista comercial de calle. Tu objetivo es armar un reporte detallado para el vendedor.
-            1. ICB en 0: Alerta máxima (primero).
+            Actúa como un analista comercial de calle. Tu objetivo es armar un reporte detallado.
+            1. ICB en 0: Alerta máxima.
             2. Metas de Venta y Saldo: Prioridad secundaria.
             3. Claro Pay: Menor urgencia.
             FORMATO: Usa ### Nombre del Cliente y viñetas (*). Desglosa las alertas tal como te indiqué anteriormente.
@@ -39,16 +40,17 @@ if uploaded_file:
             """
             
             try:
-                # Usamos gemini-1.5-flash-latest, que suele resolver el problema de versión
+                # LLAMADA CRÍTICA: Usamos el nombre simplificado 'gemini-1.5-flash' 
+                # sin prefijos ni 'latest' para evitar el error v1beta
                 response = client.models.generate_content(
-                    model='gemini-1.5-flash-latest', 
+                    model='gemini-1.5-flash',
                     contents=[image, prompt]
                 )
                 st.session_state['reporte_completo'] = response.text
                 st.markdown(response.text)
             except Exception as e:
-                st.error(f"Error de conexión con el modelo: {e}")
-                st.info("Intenta verificar en Google AI Studio si tu API Key tiene acceso al modelo 'gemini-1.5-flash-latest'.")
+                st.error(f"Error crítico: {e}")
+                st.write("Tip: Si el error persiste, tu API Key podría no tener habilitado el modelo Flash. Revisa tu cuenta en Google AI Studio.")
 
 if 'reporte_completo' in st.session_state:
     st.markdown("---")
