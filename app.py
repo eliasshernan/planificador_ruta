@@ -13,16 +13,16 @@ except: pass
 
 st.title("📋 Planificador de Ruta Comercial")
 
-# Configuración privada (Streamlit Secrets)
+# Obtener clave
 API_KEY = st.secrets.get("GEMINI_API_KEY")
 
 if not API_KEY:
-    st.error("Error: No encontré la API Key en los Secrets.")
+    st.error("Error: API Key no configurada en los Secrets.")
     st.stop()
 
+# Configuración única
 try:
     genai.configure(api_key=API_KEY)
-    # Este modelo es el más estable actualmente
     model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
     st.error(f"Error al configurar: {e}")
@@ -39,21 +39,24 @@ if uploaded_file:
             1. ICB en 0: Alerta máxima.
             2. Metas de Venta y Saldo: Prioridad secundaria.
             3. Claro Pay: Menor urgencia.
-            FORMATO: Usa ### Nombre del Cliente y viñetas (*). 
+            FORMATO: Usa ### Nombre del Cliente y viñetas (*).
             ESTRUCTURA: Devuélveme dos secciones: 'REPORTE TOTAL' y 'TOP 15 MÁS URGENTES'.
             """
             try:
+                # Llamada estándar
                 response = model.generate_content([prompt, image])
-                st.session_state['reporte_completo'] = response.text
+                st.session_state['reporte'] = response.text
                 st.markdown(response.text)
             except Exception as e:
-                st.error(f"Error en la generación: {e}")
+                st.error(f"Error técnico: {e}")
+                st.write("Si ves error 404, por favor asegúrate de haber limpiado el requirements.txt y reiniciado la app.")
 
-if 'reporte_completo' in st.session_state:
+if 'reporte' in st.session_state:
     st.markdown("---")
     col1, col2 = st.columns(2)
     with col1:
-        st.download_button("📲 Descargar TODO", st.session_state['reporte_completo'], "reporte_total.txt")
+        st.download_button("📲 Descargar TODO", st.session_state['reporte'], "reporte_total.txt")
     with col2:
-        top15 = st.session_state['reporte_completo'].split("TOP 15 MÁS URGENTES")[1] if "TOP 15 MÁS URGENTES" in st.session_state['reporte_completo'] else st.session_state['reporte_completo']
+        texto = st.session_state['reporte']
+        top15 = texto.split("TOP 15 MÁS URGENTES")[1] if "TOP 15 MÁS URGENTES" in texto else texto
         st.download_button("🔥 Descargar TOP 15", top15, "top_15_criticos.txt")
