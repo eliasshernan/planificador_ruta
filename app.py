@@ -6,7 +6,16 @@ import io
 import os
 
 # Configuración de la página
-st.set_page_config(page_title="Planificador Inteligente", layout="wide")
+st.set_page_config(page_title="Planificador Litoral Móvil", layout="wide")
+
+# Cabecera con Logo Corporativo
+try:
+    logo_path = "logo_empresa.png"
+    if os.path.exists(logo_path):
+        logo_image = Image.open(logo_path)
+        st.image(logo_image, width=400)
+except Exception as e:
+    pass
 
 st.title("📋 Planificador de Ruta Comercial")
 st.subheader("Subí la foto de tu ruta para analizar los objetivos críticos del día")
@@ -23,7 +32,6 @@ try:
     if API_KEY:
         client = genai.Client(api_key=API_KEY)
     else:
-        # Si estás en tu PC local, te va a pedir que la pongas en la barra lateral
         st.sidebar.warning("Falta configurar la API Key.")
         api_key_manual = st.sidebar.text_input("Ingresá tu Gemini API Key de forma manual:", type="password")
         if api_key_manual:
@@ -44,16 +52,19 @@ if uploaded_file is not None:
         if client is None:
             st.error("Por favor, configura la API Key en los secretos de Streamlit o en la barra lateral.")
         else:
-            with st.spinner("Generando reporte estructurado por cliente..."):
+            with st.spinner("Filtrando los 15 clientes con mayor potencial..."):
                 try:
-                    # Prompt definitivo con separación de bloques estricta por cliente
+                    # Prompt con el nuevo criterio estratégico de selección
                     prompt = """
                     Actúa como un analista comercial de calle. Tu objetivo es armar un reporte ultra corto, compacto y al grano para el vendedor. Elimina CUALQUIER tipo de introducción, saludo, texto explicativo o fecha. Empezá directamente con la información útil.
 
-                    REGLA DE LÍMITE Y PRIORIDAD:
-                    Muestra ÚNICAMENTE a los 15 clientes MÁS CRÍTICOS (filtra por saldos más bajos, saldo sin ventas o mayores caídas). Haz un corte estricto en el top 15 y descarta el resto. El informe no puede tener más de 15 clientes bajo ninguna circunstancia.
+                    CRITERIO DE SELECCIÓN ESTRICTO PARA EL TOP 15:
+                    Tu prioridad absoluta es rescatar y empujar a los clientes que tienen potencial de cumplir la meta.
+                    1. Incluye SI O SI a los clientes que YA VENDIERON algo este mes (Sell Out mayor a 0) pero que todavía NO llegaron a la meta de $13.000. Prioriza a los que estén más cerca de lograrlo (menor monto restante).
+                    2. Excluye o deja con la menor prioridad a los clientes que tengan 'Sell Out' igual a 0 (ventas en cero), porque el riesgo de perder a los que están cerca es alto si nos enfocamos en cuentas inactivas.
+                    3. Haz un corte estricto en el top 15 de clientes bajo esta regla de negocio.
 
-                    REGLA DE FORMATO OBLIGATORIA (SARTÉN POR EL MANGO):
+                    REGLA DE FORMATO OBLIGATORIA (EVITAR TEXTO PEGADO):
                     Cada cliente debe figurar como un bloque independiente. Escribe el nombre del cliente en una línea propia usando un título de tercer nivel de Markdown (### Nombre del Cliente).
                     BAJO el nombre, coloca las alertas en renglones separados usando viñetas (*). 
                     Está TERMINANTEMENTE PROHIBIDO juntar el nombre de un cliente al final de la línea o viñeta de otro comercio. Cada cliente empieza en una línea nueva.
