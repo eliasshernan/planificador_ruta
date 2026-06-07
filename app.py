@@ -1,16 +1,28 @@
 import streamlit as st
 import google.generativeai as genai
+from PIL import Image
 
-st.title("Diagnóstico de Modelos")
+st.set_page_config(page_title="App Comercial", layout="wide")
 
-API_KEY = st.secrets.get("GEMINI_API_KEY")
-genai.configure(api_key=API_KEY)
+st.title("Planificador")
 
-if st.button("Ver modelos disponibles"):
+api_key = st.secrets.get("GEMINI_API_KEY")
+
+if not api_key:
+    st.error("No hay API KEY configurada.")
+    st.stop()
+
+# Configuración básica y directa
+genai.configure(api_key=api_key)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+uploaded_file = st.file_uploader("Subí planilla", type=["jpg", "png"])
+
+if uploaded_file and st.button("Generar"):
     try:
-        models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_methods]
-        st.write("Modelos disponibles para tu API Key:")
-        st.write(models)
+        img = Image.open(uploaded_file)
+        # LLAMADA SIMPLE: Sin v1beta, sin cosas raras
+        response = model.generate_content(["Analiza esta imagen y haz un reporte", img])
+        st.write(response.text)
     except Exception as e:
-        st.error(f"Error de acceso: {e}")
-        st.write("Si ves un error aquí, tu API KEY no tiene permiso para acceder a NINGÚN modelo.")
+        st.error(f"Error definitivo: {e}")
